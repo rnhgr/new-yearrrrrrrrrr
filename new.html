@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For You</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff4d6d;
+            --bg-color: #0f0f1a; /* Deep dark blue/black */
+            --paper-color: #fffdf5;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden; /* Prevent scrollbars from the canvas */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- Background Canvas --- */
+        #starCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Behind everything */
+            pointer-events: none;
+        }
+
+        /* --- The Start Screen --- */
+        #start-screen {
+            text-align: center;
+            z-index: 100;
+            transition: opacity 0.5s ease;
+            position: relative;
+        }
+
+        .btn-open {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 77, 109, 0.5);
+            transition: transform 0.2s;
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .btn-open:hover {
+            transform: scale(1.1);
+        }
+
+        /* --- The Letter Container --- */
+        #letter-container {
+            display: none;
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 600px;
+            background: var(--paper-color);
+            padding: 40px;
+            border-radius: 5px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 1s ease;
+            /* Ensure text is selectable/clickable over canvas */
+        }
+
+        .letter-content h1 {
+            font-family: 'Dancing Script', cursive;
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .letter-content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .signature {
+            text-align: right;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.5rem;
+            margin-top: 30px;
+            color: var(--primary-color);
+        }
+
+        /* --- The Random Photos --- */
+        .photo {
+            position: fixed;
+            border: 8px solid white;
+            border-bottom: 20px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 130px; 
+            height: auto;
+            z-index: 5;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none; 
+        }
+
+        .photo img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .photo {
+                width: 90px;
+                border-width: 4px;
+                border-bottom-width: 12px;
+            }
+        }
+
+        /* --- Confetti --- */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: fall linear forwards;
+            z-index: 20;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starCanvas"></canvas>
+
+    <audio id="bg-music" loop>
+        <source src="song.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="start-screen">
+        <button class="btn-open" onclick="openSurprise()">✨ Tap to Open ✨</button>
+    </div>
+
+    <div id="letter-container">
+        <div class="letter-content">
+            <h1>Happy New Year! 🎆</h1>
+            
+            <p>Dear Trishly,</p>
+            <p>
+                Its been a long journey this year. Sobrang dami natin napagdaanan na problema or away man this year but look 
+                at us now, we are still standing strong and we made it through everything together. Hehe super thankful talaga ako
+                na hindi mo ako iniwan kahit na anong mangyari even na may mga times na gusto mo na akong iwan dahil may nagawa akong masakit sayo
+                , u forgive me lagi and accept me again, for that i am really grateful. Hindi naging madali ang year na to for you and for us
+                but still we made it through. I am really proud of us.
+            </p>
+            <p>
+                As the year comes to an end, I wanted to take a moment to tell you how much I appreciate you. 
+                Looking back at the memories we've made, I realize how lucky I am to have you in my life.
+                May this coming year bring you success, laughter, and endless joy. I can't wait to create 
+                more beautiful moments with you. May God bless us this year and always. I love you my bff!.
+            </p>
+    
+            <div class="signature">
+                With love,<br>
+                Rainy
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- YOUR PHOTOS ---
+        const photos = [
+            "heart.jpg",
+            "slimy.jpg",
+            "flower.jpg",
+            "teeth.jpg",
+            "ishy.jpg",
+            "ishyy.jpg",
+            "ishyyy.jpg",
+            "ishy1.jpg",
+            "ishy2.jpg",
+            "ishy3.jpeg"
+        ];
+
+        function openSurprise() {
+            // 1. Play Music
+            const music = document.getElementById('bg-music');
+            music.volume = 0.6; 
+            music.play().catch(error => { console.log("Audio play failed."); });
+
+            // 2. Hide Button
+            const startScreen = document.getElementById('start-screen');
+            startScreen.style.opacity = '0';
+            setTimeout(() => { startScreen.style.display = 'none'; }, 500);
+
+            // 3. Show Letter
+            const letter = document.getElementById('letter-container');
+            letter.style.display = 'block';
+            setTimeout(() => {
+                letter.style.opacity = '1';
+                letter.style.transform = 'translateY(0)';
+            }, 100);
+
+            createConfetti();
+            scatterPhotos();
+        }
+
+        function scatterPhotos() {
+            const body = document.body;
+            let shuffled = [...photos].sort(() => 0.5 - Math.random());
+            const leftPhotos = [];
+            const rightPhotos = [];
+            
+            shuffled.forEach((src, index) => {
+                if (index % 2 === 0) leftPhotos.push(src);
+                else rightPhotos.push(src);
+            });
+
+            function placeSide(photoList, side) {
+                const zoneHeight = 90 / photoList.length; 
+                photoList.forEach((src, i) => {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.classList.add('photo');
+                    const img = document.createElement('img');
+                    img.src = src;
+                    img.onerror = function() { console.error("Error loading:", src); this.style.display='none'; };
+                    imgContainer.appendChild(img);
+
+                    const zoneStart = i * zoneHeight;
+                    const randomOffset = Math.random() * (zoneHeight - 10);
+                    const topPos = 5 + zoneStart + randomOffset;
+                    const randomHorizontal = Math.floor(Math.random() * 23) + 2; 
+                    const rotation = Math.floor(Math.random() * 40) - 20;
+
+                    imgContainer.style.top = topPos + '%';
+                    if (side === 'left') imgContainer.style.left = randomHorizontal + '%';
+                    else imgContainer.style.right = randomHorizontal + '%';
+
+                    imgContainer.style.transform = `rotate(${rotation}deg) scale(0)`;
+                    body.appendChild(imgContainer);
+
+                    setTimeout(() => {
+                        imgContainer.style.opacity = '1';
+                        imgContainer.style.transform = `rotate(${rotation}deg) scale(1)`;
+                    }, 500 + (i * 300));
+                });
+            }
+            placeSide(leftPhotos, 'left');
+            placeSide(rightPhotos, 'right');
+        }
+
+        function createConfetti() {
+            const colors = ['#ff4d6d', '#ff9e00', '#ffd700', '#00b4d8', '#90e0ef'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 5000);
+            }
+        }
+
+        // --- GENTLE STAR ANIMATION ENGINE ---
+        const canvas = document.getElementById('starCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, stars = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initStars();
+        }
+
+        // Create 100 stars
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: Math.random() * 2,
+                    speed: Math.random() * 0.5 + 0.1, // Slow gentle speed
+                    opacity: Math.random()
+                });
+            }
+        }
+
+        function animateStars() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = "white";
+            
+            stars.forEach(star => {
+                ctx.globalAlpha = star.opacity;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Move star up slowly
+                star.y -= star.speed;
+                // If star goes off top, reset to bottom
+                if (star.y < 0) {
+                    star.y = height;
+                    star.x = Math.random() * width;
+                }
+            });
+
+            requestAnimationFrame(animateStars);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        animateStars();
+    </script>
+</body>
+</html>
